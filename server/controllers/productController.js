@@ -5,7 +5,7 @@ exports.getAllProducts = async (req, res) => {
     //BUILD QUERY
     //Filtering
     const queryObj = { ...req.query };
-    const excludedFields = ["sort"];
+    const excludedFields = ["page", "sort", "limit", "fields"];
     excludedFields.forEach((el) => delete queryObj[el]);
 
     //Advanced filtering
@@ -19,8 +19,24 @@ exports.getAllProducts = async (req, res) => {
       const sortBy = req.query.sort.split(",").join(" ");
       query = query.sort(sortBy);
     } else {
-      query = query.sort("-createdAt");
+      query = query.sort("-createdAt _id");
     }
+
+    //Field limiting
+    if (req.query.fields) {
+      const fields = req.query.fields.split(",").join(" ");
+      query = query.select(fields);
+    } else {
+      query = query.select("-__v");
+    }
+
+    //Pagination
+    const page = req.query.page * 1 || 1;
+    const limit = req.query.limit * 1 || 100;
+    const skip = (page - 1) * limit;
+
+    query = query.skip(skip).limit(limit);
+
     //EXECUTE QUERY
     const products = await query;
 
