@@ -2,8 +2,29 @@ const Product = require("../models/product");
 
 exports.getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    //BUILD QUERY
+    //Filtering
+    const queryObj = { ...req.query };
+    const excludedFields = ["sort"];
+    excludedFields.forEach((el) => delete queryObj[el]);
 
+    //Advanced filtering
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+
+    let query = Product.find(JSON.parse(queryStr));
+
+    //Sorting
+    if (req.query.sort) {
+      const sortBy = req.query.sort.split(",").join(" ");
+      query = query.sort(sortBy);
+    } else {
+      query = query.sort("-createdAt");
+    }
+    //EXECUTE QUERY
+    const products = await query;
+
+    //SEND RESPONSE
     res.status(200).json({
       status: "success",
       result: products.length,
@@ -86,7 +107,7 @@ exports.deleteProduct = async (req, res) => {
     });
   } catch (err) {
     res.status(404).json({
-      status: "fali",
+      status: "fail",
       message: err,
     });
   }
