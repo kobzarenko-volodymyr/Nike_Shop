@@ -5,7 +5,8 @@ exports.getAllProducts = async (req, res) => {
     //BUILD QUERY
     //Filtering
     const queryObj = { ...req.query };
-    const excludedFields = ["page", "sort", "limit", "fields"];
+    // Removing fields from the query
+    const excludedFields = ["page", "sort", "limit", "fields", "search"];
     excludedFields.forEach((el) => delete queryObj[el]);
 
     //Advanced filtering
@@ -36,6 +37,20 @@ exports.getAllProducts = async (req, res) => {
     const skip = (page - 1) * limit;
 
     query = query.skip(skip).limit(limit);
+
+    //Search
+    if (req.query.search) {
+      const search = req.query.search
+        ? {
+            //Search for text without Case sensitive
+            name: {
+              $regex: req.query.search,
+              $options: "i",
+            },
+          }
+        : {};
+      query = query.find({ ...search });
+    }
 
     //EXECUTE QUERY
     const products = await query;
