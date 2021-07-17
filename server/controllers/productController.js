@@ -1,5 +1,13 @@
 const Product = require("../models/product");
 
+//Prefilling parts of the Query object before getAllProducts handler.
+exports.getTopProducts = (req, res, next) => {
+  req.query.limit = "5";
+  req.query.sort = "-ratings, price";
+  req.query.fields = "name, price, gender, ratings";
+  next();
+};
+
 exports.getAllProducts = async (req, res) => {
   try {
     //BUILD QUERY
