@@ -1,4 +1,5 @@
 const Product = require("../models/product");
+const APIFeatures = require("./../utils/apiFeatures");
 
 //Prefilling parts of the Query object before getAllProducts handler.
 exports.getTopProducts = (req, res, next) => {
@@ -10,58 +11,14 @@ exports.getTopProducts = (req, res, next) => {
 
 exports.getAllProducts = async (req, res) => {
   try {
-    //BUILD QUERY
-    //Filtering
-    const queryObj = { ...req.query };
-    // Removing fields from the query
-    const excludedFields = ["page", "sort", "limit", "fields", "search"];
-    excludedFields.forEach((el) => delete queryObj[el]);
-
-    //Advanced filtering
-    let queryStr = JSON.stringify(queryObj);
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-
-    let query = Product.find(JSON.parse(queryStr));
-
-    //Sorting
-    if (req.query.sort) {
-      const sortBy = req.query.sort.split(",").join(" ");
-      query = query.sort(sortBy);
-    } else {
-      query = query.sort("-createdAt _id");
-    }
-
-    //Field limiting
-    if (req.query.fields) {
-      const fields = req.query.fields.split(",").join(" ");
-      query = query.select(fields);
-    } else {
-      query = query.select("-__v");
-    }
-
-    //Pagination
-    const page = req.query.page * 1 || 1;
-    const limit = req.query.limit * 1 || 100;
-    const skip = (page - 1) * limit;
-
-    query = query.skip(skip).limit(limit);
-
-    //Search
-    if (req.query.search) {
-      const search = req.query.search
-        ? {
-            //Search for text without Case sensitive
-            name: {
-              $regex: req.query.search,
-              $options: "i",
-            },
-          }
-        : {};
-      query = query.find({ ...search });
-    }
-
     //EXECUTE QUERY
-    const products = await query;
+    const features = new APIFeatures(Product.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate()
+      .search();
+    const products = await features.query;
 
     //SEND RESPONSE
     res.status(200).json({
