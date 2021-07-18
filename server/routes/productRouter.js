@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const {
+  getProductStats,
   getTopProducts,
   getAllProducts,
   getProduct,
@@ -10,6 +11,8 @@ const {
   updateProduct,
   deleteProduct,
 } = require("../controllers/productController");
+
+router.route("/product-stats").get(getProductStats);
 
 router.route("/top-5-cheap").get(getTopProducts, getAllProducts);
 

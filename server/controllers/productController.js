@@ -108,3 +108,38 @@ exports.deleteProduct = async (req, res) => {
     });
   }
 };
+
+exports.getProductStats = async (req, res) => {
+  try {
+    const stats = await Product.aggregate([
+      {
+        $match: { ratings: { $gte: 3 } },
+      },
+      {
+        $group: {
+          _id: { $toUpper: "$gender" },
+          numProducts: { $sum: 1 },
+          avgRating: { $avg: "$ratings" },
+          avgPrice: { $avg: "$price" },
+          minPrice: { $min: "$price" },
+          maxPrice: { $max: "$price" },
+        },
+      },
+      {
+        $sort: { avgRating: 1 },
+      },
+    ]);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        stats,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: "fail",
+      message: err,
+    });
+  }
+};
