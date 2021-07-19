@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const slugify = require("slugify");
 
 const productSchema = new mongoose.Schema({
   name: {
@@ -11,6 +12,7 @@ const productSchema = new mongoose.Schema({
     ],
     minlength: [5, "A product name must have more or equal then 10 characters"],
   },
+  slug: String,
   price: {
     type: Number,
     required: [true, "Please, enter product price"],
@@ -36,12 +38,20 @@ const productSchema = new mongoose.Schema({
   ratings: {
     type: Number,
     default: 0.0,
+    min: [0, "Rating must be above 0.0"],
+    max: [5, "Rating must be below 5.0"],
   },
   createdAt: {
     type: Date,
     default: Date.now(),
     select: false,
   },
+});
+
+// DOCUMENT MIDDLEWARE: runs before .save() and .create()
+productSchema.pre("save", function (next) {
+  this.slug = slugify(this.name, { lower: true });
+  next();
 });
 
 const Product = mongoose.model("Product", productSchema);
