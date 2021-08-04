@@ -2,6 +2,7 @@ const Product = require("../models/productModel");
 const APIFeatures = require("./../utils/apiFeatures");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
+const factory = require("./handlerFactory");
 
 //Prefilling parts of the Query object before getAllProducts handler.
 exports.getTopProducts = (req, res, next) => {
@@ -11,70 +12,11 @@ exports.getTopProducts = (req, res, next) => {
   next();
 };
 
-exports.getAllProducts = catchAsync(async (req, res) => {
-  //EXECUTE QUERY
-  const features = new APIFeatures(Product.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate()
-    .search();
-  const products = await features.query;
-
-  //SEND RESPONSE
-  res.status(200).json({
-    status: "success",
-    result: products.length,
-    data: {
-      products,
-    },
-  });
-});
-
-exports.getProduct = catchAsync(async (req, res) => {
-  const product = await Product.findById(req.params.id);
-
-  res.status(200).json({
-    status: "success",
-    data: {
-      product,
-    },
-  });
-});
-
-exports.createProduct = catchAsync(async (req, res) => {
-  const newProduct = await Product.create(req.body);
-
-  res.status(201).json({
-    status: "success",
-    data: {
-      product: newProduct,
-    },
-  });
-});
-
-exports.updateProduct = catchAsync(async (req, res) => {
-  const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
-
-  res.status(200).json({
-    status: "success",
-    data: {
-      product,
-    },
-  });
-});
-
-exports.deleteProduct = catchAsync(async (req, res) => {
-  await Product.findByIdAndDelete(req.params.id);
-
-  res.status(204).json({
-    status: "success",
-    data: null,
-  });
-});
+exports.getAllProducts = factory.getAll(Product);
+exports.getProduct = factory.getOne(Product, { path: "reviews" });
+exports.createProduct = factory.createOne(Product);
+exports.updateProduct = factory.updateOne(Product);
+exports.deleteProduct = factory.deleteOne(Product);
 
 exports.getProductStats = catchAsync(async (req, res) => {
   const stats = await Product.aggregate([

@@ -1,35 +1,40 @@
 const express = require("express");
+const productController = require("../controllers/productController");
+const authController = require("./../controllers/authController");
+const reviewRouter = require("./../routes/reviewRoutes");
 
 const router = express.Router();
 
-const {
-  getProductStats,
-  getTopProducts,
-  getAllProducts,
-  getProduct,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-} = require("../controllers/productController");
-const authController = require("./../controllers/authController");
+//Nested route POST, GET /product/234asdfad4/reviews
+router.use("/:productId/reviews", reviewRouter);
 
-router.route("/product-stats").get(getProductStats);
+router.route("/product-stats").get(productController.getProductStats);
 
-router.route("/top-5-cheap").get(getTopProducts, getAllProducts);
+router
+  .route("/top-5-cheap")
+  .get(productController.getTopProducts, productController.getAllProducts);
 
 router
   .route("/")
-  .get(authController.protect, getAllProducts)
-  .post(createProduct);
+  .get(productController.getAllProducts)
+  .post(
+    authController.protect,
+    authController.restrictTo("admin"),
+    productController.createProduct
+  );
 
 router
   .route("/:id")
-  .get(getProduct)
-  .patch(updateProduct)
+  .get(productController.getProduct)
+  .patch(
+    authController.protect,
+    authController.restrictTo("admin"),
+    productController.updateProduct
+  )
   .delete(
     authController.protect,
     authController.restrictTo("admin"),
-    deleteProduct
+    productController.deleteProduct
   );
 
 module.exports = router;
