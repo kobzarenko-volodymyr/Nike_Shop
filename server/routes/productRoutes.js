@@ -1,12 +1,17 @@
 const express = require("express");
 const productController = require("../controllers/productController");
 const authController = require("./../controllers/authController");
+const handlerFactory = require("./../controllers/handlerFactory");
 const reviewRouter = require("./../routes/reviewRoutes");
 
 const router = express.Router();
 
-//Nested route POST, GET /product/234asdfad4/reviews
-router.use("/:productId/reviews", reviewRouter);
+//Nested route POST, GET /product/productId/reviews
+router.use(
+  "/:productId/reviews",
+  handlerFactory.nestedRoute({ param: "productId", modelField: "product" }),
+  reviewRouter
+);
 
 router.route("/product-stats").get(productController.getProductStats);
 

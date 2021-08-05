@@ -65,9 +65,34 @@ exports.getOne = (Model, popOptions) =>
     });
   });
 
+exports.nestedRoute = function (...nestedParamsOptions) {
+  return (req, res, next) => {
+    const nestedParams = {};
+    const paramsKey = Object.keys(req.params);
+
+    if (paramsKey.length === 0 || nestedParamsOptions.length === 0) {
+      return next();
+    }
+
+    const filteredOptions = nestedParamsOptions.filter((el) => {
+      return paramsKey.includes(el.param);
+    });
+
+    filteredOptions.forEach((el) => {
+      nestedParams[el.modelField] = req.params[el.param];
+    });
+
+    req.nestedParams = nestedParams;
+
+    next();
+  };
+};
+
 exports.getAll = (Model) =>
   catchAsync(async (req, res, next) => {
-    const features = new APIFeatures(Model.find(), req.query)
+    let filter = {};
+    if (req.nestedParams) filter = req.nestedParams;
+    const features = new APIFeatures(Model.find(filter), req.query)
       .filter()
       .sort()
       .limitFields()
